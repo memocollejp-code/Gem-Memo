@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Redirecting...</title>
+  <script>
+    /**
+     * GitHub Pages SPA (Single Page Application) リダイレクト
+     * 
+     * 問題：
+     *   SPAで直接URLアクセス（例：/Gem-Memo/?tab=generate）すると、
+     *   GitHub Pagesが404エラーを返す
+     * 
+     * 解決：
+     *   404.htmlが呼ばれる → このスクリプトが実行
+     *   → pathname と search を保持したまま index.html にリダイレクト
+     *   → React Router（またはアプリケーションロジック）が正しいタブを表示
+     */
+    
+    // 元のURLを復元（GitHub Pagesが404.htmlに渡すため別途クエリから取得）
+    (function() {
+      const redirect = sessionStorage.redirect;
+      
+      if (redirect) {
+        // セッションストレージのリダイレクト先にナビゲート
+        sessionStorage.removeItem('redirect');
+        window.location.replace(redirect);
+      } else {
+        // セッションストレージがない場合の備え
+        // 現在のlocationを index.html にリダイレクト
+        const path = window.location.pathname + window.location.search + window.location.hash;
+        
+        // GitHub Pagesのリポジトリ名を考慮（例：/Gem-Memo/）
+        // パスから repo 名を取り出し
+        const parts = path.split('/').filter(p => p);
+        
+        if (parts.length > 0) {
+          // /Gem-Memo/some/path → /Gem-Memo/ に戻してindex.htmlを読み込む
+          const repoName = parts[0];
+          window.location.replace('/' + repoName + '/?redirect=' + encodeURIComponent(path));
+        } else {
+          // ローカルまたはカスタムドメインの場合
+          window.location.replace('/?redirect=' + encodeURIComponent(path));
+        }
+      }
+    })();
+  </script>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", sans-serif;
+      background: #0f0f11;
+      color: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .container {
+      text-align: center;
+      max-width: 400px;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+    p {
+      font-size: 14px;
+      color: #9ca3af;
+      line-height: 1.6;
+    }
+    .spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(167, 139, 250, 0.2);
+      border-top: 4px solid #a78bfa;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="spinner"></div>
+    <h1>リダイレクト中...</h1>
+    <p>アプリケーションへ移動しています。お待ちください。</p>
+    <p style="font-size: 12px; margin-top: 30px; color: #6b6b80;">
+      このページが表示され続ける場合は、<br />
+      <a href="/" style="color: #a78bfa; text-decoration: none;">ホームページ</a> をお試しください。
+    </p>
+  </div>
+
+  <!-- フォールバック：JavaScriptが無効な場合の html meta refresh -->
+  <noscript>
+    <meta http-equiv="refresh" content="0; url=/" />
+  </noscript>
+</body>
+</html>
